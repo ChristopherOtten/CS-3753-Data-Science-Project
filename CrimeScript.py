@@ -99,6 +99,67 @@ def barOffenses(npdata):
     plt.show()
     print("Total Amount of Crimes Committed:",c.sum())
     
+#sort the crimes and counts tuple of arrays and then "folds" them so that small and large entries are 
+#altenrating in order to keep labels from overlapping. 
+#returns the two arrays, sorted and folded
+def sortAndFoldCrimes(data):
+    data1, data2 = data
+    #sort highest to lowest
+    for i in range(0, len(data2)):
+        for j in range(i, len(data2)):
+            if(data2[j] > data2[i]):
+                temp2 = data2[i]
+                data2[i] = data2[j]
+                data2[j] = temp2
+                
+                temp1 = data1[i]
+                data1[i] = data1[j]
+                data1[j] = temp1
+    
+    #fold the data
+    fdata1 = []
+    fdata2 = []
+    
+    i = 0
+    j = len(data1) - 1
+    while(j >= i):
+        fdata1.append(data1[i])
+        if j != i:
+            fdata1.append(data1[j])
+        
+        fdata2.append(data2[i])
+        if j != i:
+            fdata2.append(data2[j])
+        
+        i += 1
+        j -= 1
+        
+    #print (fdata2)
+    #print(fdata1)
+    return (fdata1, fdata2)
+
+#create pie chart of count of each offense
+def pieOffenses(npdata):
+    
+    #make two arrays, one of the crimes and the other of the counts for each crime, send them to be sorted
+    #and "folded" so that small and large entries are altenrating in order to keep labels from overlapping
+    crimes, counts = sortAndFoldCrimes(np.unique(npdata[PRIMARYTYPE], return_counts=True))
+    
+    #set the explode values so that the smaller ones are exploded more than the large
+    explode = []
+    for i in range(0, len(counts)):
+        exVal = 0.125 - ( ( ( counts[i]/sum(counts) ) * 0.125) / 2)
+       # exVal = 0.13
+       # if(counts[i] < (sum(counts) * 0.01)):
+        if(i % 2 == 1):
+            exVal = exVal * 2.5
+        explode.append(exVal)
+    
+    # Plot
+    plt.pie(counts, explode=explode, labels=crimes, labeldistance=1.05, pctdistance=0.9, autopct='%1.1f%%', radius=3.8 )
+    plt.title('Percentage of Crimes by Offense', pad=280)
+    plt.show()
+    
 #main function in which runs all functions, no logic in main only reference
 #to another function
 
@@ -114,6 +175,7 @@ def main():
     topCrimeBlocks(data)
     leastCrimeBlocks(data)
     barOffenses(data)
+    pieOffenses(data)
 
 if __name__ == "__main__":
     main()
