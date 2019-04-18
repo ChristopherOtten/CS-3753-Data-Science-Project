@@ -160,6 +160,7 @@ def pieOffenses(npdata):
     plt.title('Percentage of Crimes by Offense', pad=280)
     plt.show()
     
+#show the offenses for the top 3 districts
 def districtTop3(npdata):
     #create a unique array of the districts and create a dict
     allDistricts, cnts = np.unique(npdata[DISTRICT], return_counts=True)
@@ -198,6 +199,21 @@ def districtTop3(npdata):
     plt.barh(d3_off, cnt)
     plt.show()
 
+#show the number of arrest for each distric
+def arrestByDist(npdata):
+    #create an array of all arrest, counts the districts and create a dictionary with the # of arrest
+    all_arrest = npdata[npdata[ARREST] == True][[DISTRICT]]
+    district, arrest = np.unique(all_arrest, return_counts=True)
+    dist_arrest_cnt = dict(zip(district, arrest))
+  
+    #create bar graph
+    plt.figure(figsize = (8,9))
+    plt.title("Number of arrest made in each district")
+    plt.ylabel("District")
+    plt.xlabel("Number of Arrest")
+    plt.yticks(np.arange(1, 26, 1))
+    plt.barh(district, arrest)
+    plt.show()
     
 #main function in which runs all functions, no logic in main only reference
 #to another function
@@ -216,6 +232,7 @@ def main():
     barOffenses(data)
     pieOffenses(data)
     districtTop3(data)
+    arrestByDist(data)
 
 if __name__ == "__main__":
     main()
