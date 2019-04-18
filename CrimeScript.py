@@ -160,6 +160,45 @@ def pieOffenses(npdata):
     plt.title('Percentage of Crimes by Offense', pad=280)
     plt.show()
     
+def districtTop3(npdata):
+    #create a unique array of the districts and create a dict
+    allDistricts, cnts = np.unique(npdata[DISTRICT], return_counts=True)
+    district_cnts = dict(zip(allDistricts, cnts))
+    
+    #sort the dictionary by value and capture the top 3 districts 
+    dist_cnts_sort = OrderedDict(sorted(district_cnts.items(), key=lambda x: x[1]))
+    keys = np.fromiter(dist_cnts_sort.keys(), dtype=int)
+    d3, d2, d1 = keys[-3:]
+    
+    print("Offenses for the top 3 districts")
+    
+    #create a unique array of the offenses for the top 3+ districts
+    #create bar graphs for each of the top 3 districts
+    d1_off, cnt = np.unique(npdata[npdata[DISTRICT]==d1][[PRIMARYTYPE]], return_counts=True)
+    plt.figure(figsize=(8,9))
+    plt.title("District " + str(d1) + "\n#1 in Offenses")
+    plt.ylabel("Offenses")
+    plt.xlabel("Number of Offenses") 
+    plt.barh(d1_off, cnt)
+    plt.show()
+    
+    d2_off, cnt = np.unique(npdata[npdata[DISTRICT]==d2][[PRIMARYTYPE]], return_counts=True)
+    plt.figure(figsize=(8,9))
+    plt.title("District " + str(d2) + "\n#2 in Offenses")
+    plt.ylabel("Offenses")
+    plt.xlabel("Number of Offenses") 
+    plt.barh(d2_off, cnt)
+    plt.show()
+    
+    d3_off, cnt = np.unique(npdata[npdata[DISTRICT]==d2][[PRIMARYTYPE]], return_counts=True)
+    plt.figure(figsize=(8,9))
+    plt.title("District " + str(d3) + "\n#1 in Offenses")
+    plt.ylabel("Offenses")
+    plt.xlabel("Number of Offenses") 
+    plt.barh(d3_off, cnt)
+    plt.show()
+
+    
 #main function in which runs all functions, no logic in main only reference
 #to another function
 
@@ -176,6 +215,7 @@ def main():
     leastCrimeBlocks(data)
     barOffenses(data)
     pieOffenses(data)
+    districtTop3(data)
 
 if __name__ == "__main__":
     main()
