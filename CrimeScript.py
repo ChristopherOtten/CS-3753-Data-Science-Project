@@ -237,6 +237,29 @@ def timeOfCrime(npdata):
     plt.ylabel("Number of Crimes")
     plt.show()
     
+    
+def topCrimeTimes(npdata):
+    
+    top5 = ['THEFT', 'BATTERY', 'CRIMINAL DAMAGE', 'ASSAULT', 'OTHER OFFENSE']
+    h = ['0','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','23']
+    for crime in top5:
+        lines = npdata[npdata[PRIMARYTYPE]==crime]
+        allTimes, counts = np.unique(lines[DATE], return_counts=True)
+        dayHours = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    
+        for i in range(0,len(allTimes)):
+            hour = allTimes[i][-5:-3]
+            #print(hour)
+            dayHours[int(hour)]+=1
+        dayHours = np.asarray(dayHours)
+        
+        plt.figure(figsize=(9,5))
+        plt.plot(h,dayHours)
+        plt.title("Time of Day for %s" %crime)
+        plt.xlabel("Time of Day")
+        plt.ylabel("Number of %s Reported" %crime)
+        plt.show()
+    
 #main function in which runs all functions, no logic in main only reference
 #to another function
 
@@ -256,6 +279,7 @@ def main():
     districtTop3(data)
     arrestByDist(data)
     timeOfCrime(data)
+    topCrimeTimes(data)
 
 if __name__ == "__main__":
     main()
