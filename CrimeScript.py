@@ -2,11 +2,15 @@ import pandas as pd
 import numpy as np
 from collections import Counter
 import matplotlib.pyplot as plt, pylab
+from collections import OrderedDict
 
 #constants to quickly references the columns
 BLOCK = 'Block'
 PRIMARYTYPE = 'Primary Type'
 LOCATIONDESCRIPTION = 'Location Description'
+DISTRICT = 'District'
+ARREST  = 'Arrest'
+DATE = 'Date'
 
 #function to read the crime statistics file and return
 #a clean dataframe
