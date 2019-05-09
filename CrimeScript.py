@@ -39,6 +39,7 @@ def getCleanCrimeDataFromWeb():
     data = pd.read_csv(url)
     data = data.dropna()
     return data
+
 #Each problem should be kept in a function, Example
 #function below in which takes in a dataframe and prints
 #the data types
@@ -283,6 +284,7 @@ def topCrimeTimes(npdata):
         plt.xlabel("Time of Day")
         plt.ylabel("Number of %s Reported" %crime)
         plt.show()
+        
 #function to get data set from year 2018
 def getDatafor2018(data):
     data = data[data[YEAR]==2018]
