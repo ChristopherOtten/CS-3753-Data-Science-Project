@@ -3,6 +3,10 @@ import numpy as np
 from collections import Counter
 import matplotlib.pyplot as plt, pylab
 from collections import OrderedDict
+import os.path
+import googlemaps
+import math
+import threading
 
 #constants to quickly references the columns
 BLOCK = 'Block'
@@ -11,14 +15,30 @@ LOCATIONDESCRIPTION = 'Location Description'
 DISTRICT = 'District'
 ARREST  = 'Arrest'
 DATE = 'Date'
+LATITUDE = 'Latitude'
+LONGITUDE = 'Longitude'
+YEAR = 'Year'
+ZIPCODE = 'Zip'
 
-#function to read the crime statistics file and return
-#a clean dataframe
+# function to read the crime statistics file and return
+# a clean dataframe
 def getCleanCrimeData():
-    data = pd.read_csv('Crimes_-_2017_to_present.csv')
+    filename = 'Crimes_-_2017_to_present.csv'
+    # Return if filename exist, if not get data from github
+    if os.path.isfile(filename):
+        data = pd.read_csv(filename)
+        data = data.dropna()
+        return data
+    else:
+        getCleanCrimeDataFromWeb()
+
+# function to read the crime statistics file and return
+# a clean dataframe
+def getCleanCrimeDataFromWeb():
+    url = 'https://github.com/ChristopherOtten/CS-3753-Data-Science-Project/blob/master/Crimes_-_2017_to_present.csv'
+    data = pd.read_csv(url)
     data = data.dropna()
     return data
-
 #Each problem should be kept in a function, Example
 #function below in which takes in a dataframe and prints
 #the data types
@@ -263,7 +283,111 @@ def topCrimeTimes(npdata):
         plt.xlabel("Time of Day")
         plt.ylabel("Number of %s Reported" %crime)
         plt.show()
-    
+#function to get data set from year 2018
+def getDatafor2018(data):
+    data = data[data[YEAR]==2018]
+    return data
+
+#Get zip code based on geographic coordinates using google's reverse geocoding api.
+#Return 0 for a specific coordinate if not found or when an exception is thrown
+#Note you will need to get a free trial in order to use thie api
+#Insert api key below
+def findZipcodeWithGoogle(data, zipCode, worker):
+    gmaps = googlemaps.Client(key='insert key here')
+    found = False
+    for index, row in data.iterrows():
+    # Look up an address with reverse geocoding
+        try:
+            reverse_geocode_result = gmaps.reverse_geocode((row[LATITUDE], row[LONGITUDE]))
+            data = reverse_geocode_result[0]
+            data = data['address_components']
+            for key in data:
+                if 'types' in key and 'postal_code' in key['types']:
+                    zipCode.append(key['long_name'])
+                    found = True
+        except:
+            print('error')
+            zipCode.append(0)
+            found = True
+        if not found:
+            zipCode.append(0)
+        found = False
+
+#Get the zip codes for year 2018 in dataset
+#Partitions the dataset into 20 threads for faster retrieval of zip code
+#Takes approx an hour to process
+def getZipcodeData(data):
+    zipcode_filename = 'zipcodes2018.csv'
+    #Return if filename exist, if not get zip code data using threads
+    if os.path.isfile(zipcode_filename):
+        return pd.read_csv(zipcode_filename)
+    else:
+        data = getDatafor2018(data)
+        num_of_threads = 20
+        coordinates = data[[LATITUDE, LONGITUDE]]
+        num_of_rows = len(coordinates.index)
+        step = math.floor(num_of_rows / num_of_threads)
+        start = 0
+        threads = []
+        zips = []
+        for i in range(num_of_threads):
+            arg = []
+            res = []
+            zips.append(res)
+            if i == num_of_threads - 1:
+                arg = coordinates[start:]
+            else:
+                arg = coordinates[start:start+step]
+            t = threading.Thread(
+                target=findZipcodeWithGoogle, args=(arg, res, i))
+            t.start()
+            threads.append(t)
+            start += step
+        for t in threads:
+            t.join()
+
+        zipConcat = []
+        for zip in zips:
+            zipConcat += zip
+        data[ZIPCODE] = zipConcat
+        data.to_csv(zipcode_filename)
+        return data
+
+#Displays the top 10 and least crimes by zip codes in 2018
+def showCrimeByZipcode2018(data):
+
+    data = getZipcodeData(data)
+    data = data.reset_index(drop=True)
+    data = data.drop('Unnamed: 0', axis=1)
+    data = data[data[ZIPCODE] != 0]
+    data = data.groupby([ZIPCODE]).size().sort_values(ascending=False)
+    top10Worst = pd.DataFrame(data[:10])
+    top10Best = pd.DataFrame(data[-10:])
+    ax1 = top10Worst.plot(kind='bar', figsize=(10, 4), rot=0, legend=None, title='Top 10 Crimes Reported in Chicago in 2018')
+    ax1.set_ylabel('Total Crimes Reported')
+    ax1.set_xlabel('Zip Codes')
+
+    ax2 = top10Best.plot(kind='bar', figsize=(10, 4), rot=0, legend=None, title='Top 10 Least Crimes Reported in Chicago in 2018')
+    ax2.set_ylabel('Total Crimes Reported')
+    ax2.set_xlabel('Zip Codes')
+
+#Displays crimes by each month for 2018
+def showCrimeByMonth2018(data):
+    data = getDatafor2018(data)
+    year = pd.DataFrame(data[DATE]).astype('str')
+    year = year.applymap(lambda x: x.split('/')[0])
+    year = year.groupby([DATE]).size().reset_index()
+
+    year = year.astype(int)
+    year = year.rename(columns={0: 'count'})
+    year = year.sort_values([DATE])
+    year.set_index(year[DATE], drop=True, append=False, inplace=True)
+    year = year.drop(DATE, axis=1)
+    ax1 = year.plot(kind='bar', figsize=(10, 4), rot=0, legend=None,
+                          title='Monthly Crimes Committed in Chicago for 2018')
+    ax1.set_ylabel('Total Crimes')
+    ax1.set_xlabel('Month')
+    ax1.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'])    
 #main function in which runs all functions, no logic in main only reference
 #to another function
 
@@ -284,6 +408,8 @@ def main():
     arrestByDist(data)
     timeOfCrime(data)
     topCrimeTimes(data)
+    showCrimeByZipcode2018(data)
+    showCrimeByMonth2018(data)
 
 if __name__ == "__main__":
     main()
