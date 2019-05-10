@@ -188,8 +188,14 @@ def pieOffenses(npdata):
 #show the offenses for the top 3 districts
 def districtTop3(npdata):
     #create a unique array of the districts and create a dict
+    global allDistricts, cnts, dist_cnts_sort, keys
     allDistricts, cnts = np.unique(npdata[DISTRICT], return_counts=True)
     district_cnts = dict(zip(allDistricts, cnts))
+    
+    #Since district 31 has only 2 offenses and no arrest I have eliminated 
+    # to be able to make arrays of same length 
+    allDistricts = allDistricts[:-1]
+    cnts = cnts[:-1]
     
     #sort the dictionary by value and capture the top 3 districts 
     dist_cnts_sort = OrderedDict(sorted(district_cnts.items(), key=lambda x: x[1]))
@@ -202,7 +208,7 @@ def districtTop3(npdata):
     #create bar graphs for each of the top 3 districts
     d1_off, cnt = np.unique(npdata[npdata[DISTRICT]==d1][[PRIMARYTYPE]], return_counts=True)
     plt.figure(figsize=(8,9))
-    plt.title("District " + str(d1) + "\n#1 in Offenses")
+    plt.title("1st Highest in Offenses: District " + str(d1))
     plt.ylabel("Offenses")
     plt.xlabel("Number of Offenses") 
     plt.barh(d1_off, cnt)
@@ -223,22 +229,138 @@ def districtTop3(npdata):
     plt.xlabel("Number of Offenses") 
     plt.barh(d3_off, cnt)
     plt.show()
+    
+def distBottom3(npdata):
+    print("\nBottom 3 Districts with the Lowest Offenses")
+    b1, b2, b3 = keys[0:3]
+   
+    b1_off, cnt = np.unique(npdata[npdata[DISTRICT]==b1][[PRIMARYTYPE]], return_counts=True)
+    plt.figure(figsize=(8,9))
+    plt.title("1st Lowest in Offenses: District " + str(b1))
+    plt.ylabel("Offenses")
+    plt.xlabel("Number of Offenses")
+    plt.barh(b1_off, cnt)
+    plt.show()
+    
+    b2Off, cnt = np.unique(npdata[npdata[DISTRICT]==b2][[PRIMARYTYPE]], return_counts=True)
+    plt.figure(figsize=(8,9))
+    plt.title("2nd Lowest in Offenses: District " + str(b2))
+    plt.ylabel("Offenses")
+    plt.xlabel("Number of Offenses")
+    plt.barh(b2Off, cnt)
+    plt.show()
+    
+    
+    b3Off, cnt = np.unique(npdata[npdata[DISTRICT]==b3][[PRIMARYTYPE]], return_counts=True)
+    plt.figure(figsize=(8,9))
+    plt.title("3rd Lowest in Offenses: District " + str(b3))
+    plt.ylabel("Offenses")
+    plt.xlabel("Number of Offenses")
+    plt.barh(b3Off, cnt)
+    plt.show()
+    
+    
 
 #show the number of arrest for each distric
 def arrestByDist(npdata):
-    #create an array of all arrest, counts the districts and create a dictionary with the # of arrest
+    #create an array of all arrest, and all districts, 
+    #counts the districts and create a dictionary with the # of arrest
+    #and the number of offenses
+    global all_arrest, district, arrest
+    
     all_arrest = npdata[npdata[ARREST] == True][[DISTRICT]]
     district, arrest = np.unique(all_arrest, return_counts=True)
-    dist_arrest_cnt = dict(zip(district, arrest))
+    
+    
   
     #create bar graph
-    plt.figure(figsize = (8,9))
-    plt.title("Number of arrest made in each district")
+    plt.figure(figsize = (10,8))
+    plt.title("Number of Offenses and Arrest")
     plt.ylabel("District")
     plt.xlabel("Number of Arrest")
-    plt.yticks(np.arange(1, 26, 1))
-    plt.barh(district, arrest)
+    plt.yticks((allDistricts))
+    plt.barh(allDistricts, cnts, color = 'orange', label='All Offenses')
+    plt.barh(district, arrest, color = 'blue', label='Arrest')
+    plt.legend()
     plt.show()
+
+#arrest percent for each district -- looking to find differences in arrest
+#for each district
+def arrest_percent(npdata):
+
+    percent = cnts / arrest
+    
+    dist_arrest_percent = dict(zip(district, percent))
+    dist_arrest = dict(zip(district, arrest))
+    dist_offense = dict(zip(district, cnts))
+    
+    
+    plt.figure(figsize = (8,9))
+    plt.title("Perctage of arrest for each District")
+    plt.ylabel('District')
+    plt.xlabel('Arrest Percentage')
+    plt.yticks((allDistricts))
+    plt.barh(allDistricts, percent)
+    plt.show()
+    
+  ##information for districcts w/ most / least arrest perccent
+    maxp = max(dist_arrest_percent, key=lambda key: dist_arrest_percent[key])
+    minp = min(dist_arrest_percent, key=lambda key: dist_arrest_percent[key])
+    
+    
+    print("Highest Percentage district : ",  maxp,
+          "\nPercent of Arrest to Offenses; ", '{:.2f}%'.format(dist_arrest_percent[maxp]),
+          "\nNumber of Arrest: ", dist_arrest[maxp],
+          "\nNumber of Offenses: " , dist_offense[maxp])
+    
+    print("\nLowest Percitage district : ", minp,
+          "\nPercent of Arrest to Offenses: ", '{:.2f}%'.format(dist_arrest_percent[minp]),
+          "\nNumer of Arrest: ", dist_arrest[minp],
+          "\nNumber of Offenses: ", dist_offense[minp], "\n")
+   
+    
+#will compare the amount of arrest to offenses for all crimes in district 11
+#district 11 has the lowest arrest but the highest offenses    
+def low_perc_dist(npdata):
+
+    d11 = npdata[npdata[DISTRICT]==11]
+    d11_df = pd.DataFrame(d11, columns = [PRIMARYTYPE,ARREST])
+    
+    d11_off_uniq = pd.value_counts(pd.Series(d11_df[PRIMARYTYPE]))
+    
+    d11_arrest = d11_df.loc[lambda d11_df: d11_df[ARREST]==True]
+    d11_arrest_uniq = pd.value_counts(pd.Series(d11_arrest[PRIMARYTYPE]))
+    
+    df = pd.concat([d11_off_uniq, d11_arrest_uniq], sort=False,axis = 1,
+                   keys=['offenses','arrest'], names=['District 11'])
+    df = df.fillna(0)
+ 
+    print(df,"\n")
+    df.plot(kind='barh',figsize=(8,9), legend=True)
+    plt.title("District 11 Offenses and Arrest")
+    plt.xlabel("Number of Offenses")
+    plt.ylabel("Offenses")
+    
+def high_perc_dist(npdata):
+    
+    df17 = pd.DataFrame(npdata[npdata[DISTRICT]==17], columns =[PRIMARYTYPE, ARREST])
+    df17_off_uniq = pd.value_counts(pd.Series(df17[PRIMARYTYPE]))
+    
+    df17_arr = df17.loc[lambda df17: df17[ARREST]==True]
+    df17_arr_uniq = pd.value_counts(pd.Series(df17_arr[PRIMARYTYPE]))
+    
+    df = pd.concat([df17_off_uniq, df17_arr_uniq], sort=False, axis=1,
+                    keys=['offenses','arrest'], names=['District 17'])
+    df = df.fillna(0)
+    
+   
+    
+    df.plot(kind='barh', figsize=(8,9), legend=True)
+    plt.title("District 17 Offenses and Arrest")
+    plt.xlabel("Number of Offenses")
+    plt.ylabel("Offenses")
+    
+    print(df,"\n")
     
 def timeOfCrime(npdata):
     
@@ -446,7 +568,11 @@ def main():
     barOffenses(data)
     pieOffenses(data)
     districtTop3(data)
+    distBottom3(data)
     arrestByDist(data)
+    arrest_percent(data)
+    low_perc_dist(data)
+    high_perc_dist(data)
     timeOfCrime(data)
     topCrimeTimes(data)
     showCrimeByZipcode2018(data)
