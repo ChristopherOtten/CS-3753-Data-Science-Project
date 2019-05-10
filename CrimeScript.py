@@ -4,7 +4,7 @@ from collections import Counter
 import matplotlib.pyplot as plt, pylab
 from collections import OrderedDict
 import os.path
-import googlemaps
+#import googlemaps
 import math
 import threading
 
@@ -389,7 +389,46 @@ def showCrimeByMonth2018(data):
                           title='Monthly Crimes Committed in Chicago for 2018')
     ax1.set_ylabel('Total Crimes')
     ax1.set_xlabel('Month')
-    ax1.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'])    
+    ax1.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec']) 
+
+    
+def violentVsNonviolentCrimesForChicago(npdata):
+    vCrimes = []
+    nvCrimes = []
+    #print(npdata[PRIMARYTYPE])
+    for i in npdata[PRIMARYTYPE]:
+        #print(i)
+        if(i == 'ARSON' or
+            i == 'ASSAULT' or
+            i == 'BATTERY' or
+            i == 'BURGLARY' or
+            i == 'CRIMINAL DAMAGE' or
+            i == 'HOMICIDE' or
+            i == 'HUMAN TRAFFICKING' or
+            i == 'INTIMIDATION' or
+            i == 'KIDNAPPING' or
+            i == 'OFFENSE INVOLVING CHILDREN' or
+            i == 'ROBBERY' or
+            i == 'WEAPONS VIOLATION'):
+                vCrimes.append(i)
+        elif(i == 'NON-CRIMINAL' or
+            i == 'NON-CRIMINAL (SUBJECT SPECIFIED)' or
+            i == 'OTHER OFFENSE'):
+            continue;
+        else:
+            nvCrimes.append(i)
+            
+    numv = len(vCrimes)
+    numnv = len(nvCrimes)
+    
+    labels = ['Non-violent', 'Violent']
+    slices = [numnv, numv]
+    colors = ['royalblue', 'firebrick']
+    
+    plt.pie(slices, labels=labels, colors=colors, explode=[0, .1], autopct='%1.1f%%', shadow=True, radius=2)
+    plt.title('Violent vs. Non-violent Crimes in Chicago', pad=150)
+    plt.show()  
+
 #main function in which runs all functions, no logic in main only reference
 #to another function
 
@@ -412,6 +451,8 @@ def main():
     topCrimeTimes(data)
     showCrimeByZipcode2018(data)
     showCrimeByMonth2018(data)
+    violentVsNonviolentCrimesForChicago(data)
+    
 
 if __name__ == "__main__":
     main()
