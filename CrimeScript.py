@@ -200,6 +200,7 @@ def districtTop3(npdata):
     #sort the dictionary by value and capture the top 3 districts 
     dist_cnts_sort = OrderedDict(sorted(district_cnts.items(), key=lambda x: x[1]))
     keys = np.fromiter(dist_cnts_sort.keys(), dtype=int)
+    keys = keys[1:]
     d3, d2, d1 = keys[-3:]
     
     print("Offenses for the top 3 districts")
